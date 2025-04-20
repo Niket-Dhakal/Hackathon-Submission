@@ -1,0 +1,312 @@
+{% csrf_token %}
+
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Home Page</title>
+        <style>
+            /* 
+            Colors (bright to dark):
+             - #fbbbad
+             - #ee8695
+             - #4a7a96
+             - #333f58
+             - #292831
+            */
+
+            :root {
+                /* 
+                An idea for the color pallet we could use
+                Also Coolors.co is very good for this kind of thing!
+                Pallet: */
+                --colorButtonLight: #ec717c;
+                --colorButtonDark: #b95170;
+                --colorButtonHoverLight: #b95170;
+                --colorButtonHoverDark: #9b356d;
+                --colorAccentLight: #AAC0AF;
+                --colorAccent: #839791;
+                --colorAccentDarker: #587f85;
+                --colorAccent2: #9cbfc4;
+                --color5: #896978;
+                --colorBlack: rgb(3, 0, 16);
+                --colorWhite: rgb(255, 249, 222);
+                /* Use like a variable with var(), insert variable name inside parenthesies. EX: var(--color1) */
+            }
+
+            body {
+                font-family: Verdana;
+                background-color: var(--color5);
+            }
+
+            .title-div {
+                height: 950px;
+                text-align: center;
+                align-content: center;
+            }
+
+            .title {
+                font-size: 75px;
+                color: var(--colorBlack);
+            }
+
+            .main {
+                height: 100vh;
+                display: flex;
+            }
+
+            .box {
+                height: 250vh;
+            }
+
+            .main-about {
+                width: 50vw;
+                background-color: var(--colorAccent2);
+                padding: 0px;
+                padding-left: 10px;
+            }
+
+            h2 {
+                text-align: center;
+            }
+
+            .about-header {
+                font-size: 35px;
+            }
+
+            .about-paragraph {
+                font-size: 20px;
+            }
+
+            .main-form {
+                background-color: var(--colorAccent);
+                margin-top: 10px;
+                margin-left: 10px;
+                margin-right: 10px;
+                padding-left: 10px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                border: 5px solid var(--colorAccentDarker);
+                border-radius: 20px;
+                text-align: center;
+                /* position: sticky;
+                top: 0px; */
+            }
+
+            .main-prompt {
+                width: 50vw;
+                background-color: var(--colorAccentLight);
+            }
+
+            .prompt-title {
+                font-size: 50px;
+                text-align: center;
+            }
+
+            label {
+                font-size: 25px;
+            }
+
+            #term, #region {
+                font-size: 30px;
+                text-align: center;
+                margin-top: 25px;
+                margin-bottom: 50px;
+                border: 5px solid var(--colorAccentDarker);
+                border-radius: 20px;
+                background-color: var(--colorAccentLight);
+
+                transition: all 0.2s;
+            }
+
+            #term {
+                -webkit-text-fill-color: var(--colorBlack);
+            }
+
+            #region {
+                transition: all 0.2s;
+            }
+
+            #region:hover {
+                border: 5px solid var(--colorAccentDarker);
+                background-color: var(--colorAccent);
+                color: var(--colorWhite);
+            }
+
+            .term-submit {
+                font-size: 25px;
+                border-radius: 0px;
+                background-color: var(--colorAccentLight);
+                border: 4px solid var(--colorAccentDarker);
+                transition: all 0.3s;
+            }
+
+            .term-submit:hover {
+                background-color: var(--colorAccent);
+                color: whitesmoke;
+                transform: translateY(-10px);
+            }
+
+            select {
+                font-size: 20px;
+                border: 4px solid gray;
+            }
+
+            .chat-box {
+                height: 1000px;
+                margin: 0px;
+                margin-top: 10px;
+                margin-right: 10px;
+                margin-left: 10px;
+                margin-bottom: 10px;
+                background-color: white;
+                border: 5px solid #dddddd;
+                border-radius: 20px;
+            }
+
+            .chat-response-text {
+                text-align: left;
+                margin: 0px;
+                margin-top: 10px;
+                margin-left: 10px;
+            }
+
+            #llm-response-text {
+                padding-left: 10px;
+                padding-right: 10px;
+                font-size: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <script>
+            // No changes needed to this script, but I'll explain.
+            document.addEventListener("DOMContentLoaded", function () {
+                const form = document.getElementById('vocabTermForm');
+                const chatBox = document.getElementById('chat-box');
+                const llmResponseText = document.getElementById('llm-response-text');
+
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault(); // Stop the form from refreshing the page
+
+                    const formData = new FormData(form);
+                    const vocabularyTerm = formData.get("vocabTerm");
+                    const region = formData.get("regionSelect");
+
+                    const data = {
+                        vocab_term: vocabularyTerm,
+                        region: region
+                    };
+
+                    fetch('/submit-vocab/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => {  // Simplify the response handling
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json(); // Parse the JSON directly
+                    })
+                    .then(result => {
+                        console.log("Success:", result);
+                        // Display the LLM response in the chat box
+                        if (result.status === 'success' && result.llm_response) {
+                            llmResponseText.textContent = result.llm_response;  // Set the text
+                            chatBox.style.display = 'block'; // Make sure the chat box is visible, if it was hidden
+                        } else {
+                            llmResponseText.textContent = "Sorry, there was an error.";
+                            chatBox.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error submitting form:", error);
+                    });
+                });
+
+                // CSRF token helper function (Correct and standard)
+                function getCookie(name) {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            // Does this cookie string begin with the name we want?
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
+            });
+        </script>
+        <div class="title-div">
+            <h1 class="title">AI Assisted AP Human Geography Vocabulary News References</h1>
+        </div>
+        <section class="main">
+            <!-- Info about the website (left side) -->
+            <div class="box main-about">
+                <h2 class="about-header">Inspiration</h2>
+                <p class="about-paragraph">Throughout our freshman year of high school, the hardest class for most people has been AP Human Geography. With topics so vast and diverse, along with vocabulary memorization and application, students have struggled to ace their tests. But, we thought about how most people learn. Through real life examples! With this we sought out to build a simple AI assisted news gatherer, which gives real life news based off of a chosen vocabulary term and region.</p><br>
+                <h2 class="about-header">What it does</h2>
+                <p class="about-paragraph">The website takes user input and returns multiple/single article(s) going in depth into real life applications of the term they requested to search.</p><br>
+                <h2 class="about-header">How we built it</h2>
+                <p class="about-paragraph">By using a django backend to handle all of our data, we used a HTML, CSS, and JavaScript front-end to handle and transport our data between our backend. Along with using a RAG model to add AI suggestions and article tweaking to produce a clearer product.</p><br>
+                    <h2 class="about-header">Challenges we ran into</h2>
+                <ul class="about-paragraph">
+                    <li>Collaboration services (not finding applicable/active collaboration services)</li>
+                    <li>Learning all the new concepts on the spot.</li>
+                    <li>Building a user friendly UI and making it easy to read and understand.</li>
+                    <li>Developing a web scraper that can collect information reliably and consistently.</li>
+                </ul><br>
+                <h2 class="about-header">What we learned</h2>
+                <ul class="about-paragraph">
+                    <li>Connections for backend to frontend are complex, and can require lots of time and experience to understand, and be able to do at a high level.</li>
+                    <li>Going into a competition “blind” with no significant knowledge of the topics can be burdening.</li>
+                </ul><br>
+                <h2 class="about-header">What's next for our program</h2>
+                <p class="about-paragraph">The next steps for our program include the following:</p>
+                <ul class="about-paragraph">
+                    <li>Expanding our news platforms, so that more information can be gathered.</li>
+                    <li>Expanding our topics (more vocab, or topics from other classes)</li>
+                    <li>Better front-end experience for users</li>
+                </ul><br>
+                <h2 class="about-header">Built With</h2>
+                <p class="about-paragraph">We used bs4 and Django libraries, SQL, Python, HTML, CSS, and JavaScript to construct our front and back-ends.</p>
+            </div>
+            <!-- User prompt area (right side) -->
+            <div class="box main-prompt">
+                <div class="main-form">
+                    <h2 class="prompt-title">Ask the AI:</h2>
+                    <form action="{% url 'submit_vocab' %}" id="vocabTermForm">
+                        {% csrf_token %}
+                        <label for="region">Select region you would like to get data from.</label><br>
+                        <select id="region" name="regionSelect">
+                            <option>USA</option>
+                            <option>Canada</option>
+                            <option>South America</option>
+                            <option>Europe</option>
+                            <option>Asia</option>
+                            <option>Africa</option>
+                        </select><br>
+                        <label for="vocabTerm">Enter vocabulary term to conduct a search upon.</label><br>
+                        <input type="text" id="term" placeholder="Enter Vocabulary Term" name="vocabTerm"><br>
+                        <input type="submit" value="Submit Form" class="term-submit"/>
+                        <p>Be patient after submiting. Responce times may vary.</p>
+                    </form>
+                </div>
+                <div class="chat-box">
+                    <h3 class="chat-response-text">Chat Response:</h3>
+                    <p id="llm-response-text"></p>
+                </div>
+            </div>
+        </section>
+    </body>
+</html>
